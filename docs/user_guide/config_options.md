@@ -163,6 +163,79 @@ fluxsites:
 
 ```
 
+### [meorg_analysis](#meorg_analysis)
+
+Contains settings for the [r-meorg][meorg] analysis job that runs on Gadi after the
+fluxsite job. When `enabled` is true, `benchcab fluxsite` submits the analysis job with
+an `afterok` dependency on the fluxsite job. `benchcab meorg-analysis` submits the same
+job for outputs that already exist.
+
+This key is _optional_. **Default** values apply if it is not specified.
+
+```yaml
+fluxsite:
+  meorg_analysis:
+    enabled: true
+    cache_root: /g/data/tm70/$USER/meorg-cache
+```
+
+[`enabled`](#+meorg_analysis.enabled){ #+meorg_analysis.enabled }
+
+: **Default:** False, _optional key_. :octicons-dash-24: Submit the analysis job after
+the fluxsite job.
+
+[`cache_root`](#+meorg_analysis.cache_root){ #+meorg_analysis.cache_root }
+
+: **Default:** empty, _optional key_. :octicons-dash-24: Directory holding the staged
+analysis inputs, as `datasets/<site id>/*.nc` (Met and Flux) and
+`benchmarks/{1lin,3km27,LSTM}/*.nc`. It is required when `enabled` is true.
+
+[`module_use`](#+meorg_analysis.module_use){ #+meorg_analysis.module_use }
+
+: **Default:** `/g/data/vk83/staging/modules`, _optional key_. :octicons-dash-24: Module
+path the analysis job adds with `module use`.
+
+[`module`](#+meorg_analysis.module){ #+meorg_analysis.module }
+
+: **Default:** `r-meorg/20260911T111509-1722dbe-pr75`, _optional key_.
+:octicons-dash-24: Module the analysis job loads.
+
+[`runner`](#+meorg_analysis.runner){ #+meorg_analysis.runner }
+
+: **Default:** `/g/data/tm70/ys1563/meorg-gadi-tests/scripts/meorg-run.R`, _optional
+key_. :octicons-dash-24: Path to the `meorg-run.R` runner. The job runs
+`Rscript <runner> --input input.json --run-dir <run dir>`.
+
+[`ncpus`](#+meorg_analysis.ncpus){ #+meorg_analysis.ncpus }
+
+: **Default:** 12, _optional key_. :octicons-dash-24: CPU cores for the analysis job.
+
+[`mem`](#+meorg_analysis.mem){ #+meorg_analysis.mem }
+
+: **Default:** 48GB, _optional key_. :octicons-dash-24: Memory limit for the analysis job.
+
+[`walltime`](#+meorg_analysis.walltime){ #+meorg_analysis.walltime }
+
+: **Default:** `01:00:00`, _optional key_. :octicons-dash-24: Wall clock time limit for
+the analysis job.
+
+[`storage`](#+meorg_analysis.storage){ #+meorg_analysis.storage }
+
+: **Default:** `[gdata/tm70, gdata/ks32, gdata/vk83]`, _optional key_.
+:octicons-dash-24: Storage flags for the analysis job. They must cover the runner, the
+module, the cache, and the fluxsite outputs.
+
+```yaml
+
+fluxsite:
+  meorg_analysis:
+    ncpus: 12
+    mem: 48GB
+    walltime: 01:00:00
+    storage: [gdata/tm70, gdata/ks32, gdata/vk83]
+
+```
+
 ## spatial
 
 Contains settings specific to spatial tests.

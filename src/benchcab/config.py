@@ -125,6 +125,9 @@ def read_optional_key(config: dict):
     config["fluxsite"]["pbs"] = internal.FLUXSITE_DEFAULT_PBS | config["fluxsite"].get(
         "pbs", {}
     )
+    config["fluxsite"]["meorg_analysis"] = internal.MEORG_ANALYSIS_DEFAULTS | config[
+        "fluxsite"
+    ].get("meorg_analysis", {})
 
     config["codecov"] = config.get("codecov", False)
 

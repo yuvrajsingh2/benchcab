@@ -111,6 +111,42 @@ fluxsite:
           schema:
             type: "string"
             required: false
+    meorg_analysis:
+      type: "dict"
+      required: false
+      schema:
+        enabled:
+          type: "boolean"
+          required: false
+        module_use:
+          type: "string"
+          required: false
+        module:
+          type: "string"
+          required: false
+        runner:
+          type: "string"
+          required: false
+        cache_root:
+          type: "string"
+          required: false
+        ncpus:
+          type: "integer"
+          required: false
+        mem:
+          type: "string"
+          regex: "(?i)^[0-9]+(mb|gb)$"
+          required: false
+        walltime:
+          type: "string"
+          regex: "^[0-4]?[0-9]:[0-5]?[0-9]:[0-5]?[0-9]$"
+          required: false
+        storage:
+          type: list
+          required: false
+          schema:
+            type: "string"
+            required: false
 
 spatial:
   type: "dict"

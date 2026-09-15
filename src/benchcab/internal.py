@@ -311,6 +311,19 @@ def get_met_forcing_file_names(experiment: str) -> list[str]:
     return file_names
 
 
+# Defaults for the r-meorg analysis job (`fluxsite.meorg_analysis`).
+MEORG_ANALYSIS_DEFAULTS = dict(
+    enabled=False,
+    module_use="/g/data/vk83/staging/modules",
+    module="r-meorg/20260911T111509-1722dbe-pr75",
+    runner="/g/data/tm70/ys1563/meorg-gadi-tests/scripts/meorg-run.R",
+    cache_root="",
+    ncpus=12,
+    mem="48GB",
+    walltime="01:00:00",
+    storage=["gdata/tm70", "gdata/ks32", "gdata/vk83"],
+)
+
 # Configuration for the client upload
 MEORG_CLIENT = dict(
     num_threads=1,  # Parallel uploads over 4 cores

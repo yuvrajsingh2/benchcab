@@ -4,6 +4,7 @@
 """Contains the benchcab application class."""
 
 import grp
+import json
 import logging
 import os
 import sys
@@ -12,6 +13,7 @@ from subprocess import CalledProcessError
 from typing import Optional
 
 import benchcab.utils.meorg as bm
+import benchcab.utils.meorg_analysis as bma
 from benchcab import fluxsite, internal, spatial
 from benchcab.comparison import run_comparisons, run_comparisons_in_parallel
 from benchcab.config import read_config
@@ -254,6 +256,10 @@ class Benchcab:
                 benchcab_job_id=job_id,
             )
 
+        # Submit the r-meorg analysis job, chained on the fluxsite job
+        if config["fluxsite"]["meorg_analysis"]["enabled"]:
+            self._submit_meorg_analysis(config, depends_on=job_id, dry_run=False)
+
     def gen_codecov(self, config_path: str):
         """Endpoint for `benchcab codecov`."""
         logger = self._get_logger()
@@ -312,7 +318,6 @@ class Benchcab:
 
         for repo in self._get_models(config):
             if repo.build_script:
-
                 logger.info("Compiling CABLE using custom build script for")
                 logger.info(f"realisation {repo.name}")
                 repo.custom_build(modules=config["modules"])
@@ -469,12 +474,16 @@ class Benchcab:
 
         # Bail out if incomplete
         if not all_complete:
-            logger.error(f"{num_failed} tasks have failed, unable to transfer. Exiting.")
+            logger.error(
+                f"{num_failed} tasks have failed, unable to transfer. Exiting."
+            )
             sys.exit(1)
 
         # Check if the output name is set
         if config.get("meorg_output_name") is None:
-            logger.error("meorg_output_name is not defined in config, unable to transfer files.")
+            logger.error(
+                "meorg_output_name is not defined in config, unable to transfer files."
+            )
             sys.exit(1)
 
         # Upload to meorg if meorg_output_name optional key is passed
@@ -485,3 +494,54 @@ class Benchcab:
             benchcab_bin=str(self.benchcab_exe_path),
             benchcab_job_id=None,
         )
+
+    def _submit_meorg_analysis(self, config: dict, depends_on=None, dry_run=False):
+        """Write `input.json` and submit (or render) the r-meorg analysis job."""
+        logger = self._get_logger()
+        settings = config["fluxsite"]["meorg_analysis"]
+        if not settings["cache_root"]:
+            msg = "fluxsite.meorg_analysis.cache_root is not set."
+            raise ValueError(msg)
+
+        run_dir = (internal.FLUXSITE_DIRS["ANALYSIS"] / "meorg").absolute()
+        mkdir(run_dir, parents=True, exist_ok=True)
+        run_id = f"benchcab-{config['fluxsite']['experiment']}-{Path.cwd().name}"
+
+        payload = bma.build_analysis_input(
+            config=config,
+            tasks=self._get_fluxsite_tasks(config),
+            cache_root=Path(settings["cache_root"]),
+            run_id=run_id,
+            fluxsite_job_id=depends_on,
+        )
+        input_path = run_dir / "input.json"
+        with input_path.open("w", encoding="utf-8") as file:
+            json.dump(payload, file, indent=2)
+        logger.info(f"Wrote r-meorg analysis input: {input_path}")
+
+        result = bma.submit_analysis(
+            config,
+            input_path=input_path,
+            run_dir=run_dir,
+            depends_on=depends_on,
+            dry_run=dry_run,
+        )
+        if dry_run:
+            logger.info(f"Dry run, not submitted. Command: {result}")
+        else:
+            logger.info(f"r-meorg analysis job submitted: {result}")
+        return result
+
+    def meorg_analysis(self, config_path: str, dry_run: bool = False):
+        """Endpoint for `benchcab meorg-analysis`."""
+        logger = self._get_logger()
+        config = self._get_config(config_path)
+
+        tasks = self._get_fluxsite_tasks(config)
+        num_tasks, num_complete, num_failed, all_complete = task_summary(tasks)
+        logger.debug(f"{num_complete}/{num_tasks} completed.")
+        if not all_complete and not dry_run:
+            logger.error(f"{num_failed} tasks have failed, unable to analyse. Exiting.")
+            sys.exit(1)
+
+        self._submit_meorg_analysis(config, depends_on=None, dry_run=dry_run)

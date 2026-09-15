@@ -267,4 +267,20 @@ def generate_parser(app: Benchcab) -> argparse.ArgumentParser:
     )
     parser_meorg_transfer.set_defaults(func=app.meorg_transfer)
 
+    # subcommand: 'benchcab meorg-analysis'
+    parser_meorg_analysis = subparsers.add_parser(
+        "meorg-analysis",
+        parents=[args_help, args_subcommand],
+        help="Submit an r-meorg analysis job for existing fluxsite outputs.",
+        description="""Builds the r-meorg input.json from the fluxsite outputs and the
+        staged input cache, then submits the analysis job with hpcpy.""",
+        add_help=False,
+    )
+    parser_meorg_analysis.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Write input.json and render the job script without submitting.",
+    )
+    parser_meorg_analysis.set_defaults(func=app.meorg_analysis)
+
     return main_parser
