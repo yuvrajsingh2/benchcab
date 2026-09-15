@@ -161,8 +161,10 @@ def submit_analysis(
         project=config["project"],
         ncpus=settings["ncpus"],
         mem=settings["mem"],
-        module_use=settings["module_use"],
-        module=settings["module"],
+        # Prefixed to avoid the `module_use` and `modules` arguments that newer
+        # hpcpy versions consume before the template context.
+        meorg_module_use=settings["module_use"],
+        meorg_module=settings["module"],
         runner=settings["runner"],
         input_json=str(input_path),
         run_dir=str(run_dir),

@@ -12,8 +12,8 @@
 set -ev
 
 module purge
-module use {{module_use}}
-module load {{module}}
+module use {{meorg_module_use}}
+module load {{meorg_module}}
 
 mkdir -p {{run_dir}}
 Rscript {{runner}} --input {{input_json}} --run-dir {{run_dir}}

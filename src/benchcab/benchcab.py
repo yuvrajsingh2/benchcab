@@ -318,6 +318,7 @@ class Benchcab:
 
         for repo in self._get_models(config):
             if repo.build_script:
+
                 logger.info("Compiling CABLE using custom build script for")
                 logger.info(f"realisation {repo.name}")
                 repo.custom_build(modules=config["modules"])
@@ -474,16 +475,12 @@ class Benchcab:
 
         # Bail out if incomplete
         if not all_complete:
-            logger.error(
-                f"{num_failed} tasks have failed, unable to transfer. Exiting."
-            )
+            logger.error(f"{num_failed} tasks have failed, unable to transfer. Exiting.")
             sys.exit(1)
 
         # Check if the output name is set
         if config.get("meorg_output_name") is None:
-            logger.error(
-                "meorg_output_name is not defined in config, unable to transfer files."
-            )
+            logger.error("meorg_output_name is not defined in config, unable to transfer files.")
             sys.exit(1)
 
         # Upload to meorg if meorg_output_name optional key is passed
