@@ -102,7 +102,12 @@ def test_role_counts_and_envelope(au_tum):
     assert au_tum["config"] == {
         "schema_version": 1,
         "analysis": {},
-        "runtime": {"parallel_multisite_plots": True},
+        "runtime": {
+            "parallel_multisite_plots": True,
+            "load_workers": None,
+            "single_site_plot_workers": None,
+            "multisite_workers": None,
+        },
     }
 
 

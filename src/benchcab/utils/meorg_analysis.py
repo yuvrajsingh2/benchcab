@@ -116,7 +116,15 @@ def build_analysis_input(
         "config": {
             "schema_version": 1,
             "analysis": {},
-            "runtime": {"parallel_multisite_plots": True},
+            # The worker counts stay null so pals resolves them from PBS_NCPUS.
+            # Name all four keys: RJSONIO simplifies a one-key object to a
+            # named vector, and pals then rejects `runtime` as not a list.
+            "runtime": {
+                "parallel_multisite_plots": True,
+                "load_workers": None,
+                "single_site_plot_workers": None,
+                "multisite_workers": None,
+            },
         },
     }
 
