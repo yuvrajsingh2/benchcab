@@ -165,10 +165,29 @@ fluxsites:
 
 ### [meorg_analysis](#meorg_analysis)
 
-Contains settings for the [r-meorg][meorg] analysis job that runs on Gadi after the
-fluxsite job. When `enabled` is true, `benchcab fluxsite` submits the analysis job with
-an `afterok` dependency on the fluxsite job. `benchcab meorg-analysis` submits the same
-job for outputs that already exist.
+Contains settings to run the [modelevaluation.org][meorg] analysis on Gadi instead of
+on the modelevaluation.org worker. It applies only when `meorg_output_name` is set in
+`realisations`.
+
+When `enabled` is true, `benchcab fluxsite` submits three jobs after the fluxsite job.
+Each job waits for the one before it (`afterok`):
+
+1. **B** (`copyq`): create the model output on modelevaluation.org without files, then
+   fetch the analysis inputs with `meorg analysis input`. It writes
+   `runs/fluxsite/analysis/meorg/input.json`. Inputs already in the cache are not
+   downloaded again.
+2. **R** (`normal`): run the analysis with `meorg-run` from the `r-meorg` module. The
+   results are in `runs/fluxsite/analysis/meorg/`.
+3. **U** (`copyq`): submit the result with `meorg analysis submit-result`, then upload
+   the fluxsite outputs to the model output.
+
+The result shows on modelevaluation.org before the upload is complete. The
+modelevaluation.org worker cannot analyse the model output until the upload is
+complete.
+
+`benchcab meorg-analysis` submits the same three jobs for fluxsite outputs that already
+exist, also when `enabled` is false. Use `--dry-run` to render the job scripts without
+submitting them.
 
 This key is _optional_. **Default** values apply if it is not specified.
 
@@ -176,63 +195,74 @@ This key is _optional_. **Default** values apply if it is not specified.
 fluxsite:
   meorg_analysis:
     enabled: true
-    cache_root: /g/data/tm70/$USER/meorg-cache
 ```
 
 [`enabled`](#+meorg_analysis.enabled){ #+meorg_analysis.enabled }
 
-: **Default:** False, _optional key_. :octicons-dash-24: Submit the analysis job after
-the fluxsite job.
-
-[`cache_root`](#+meorg_analysis.cache_root){ #+meorg_analysis.cache_root }
-
-: **Default:** empty, _optional key_. :octicons-dash-24: Directory holding the staged
-analysis inputs, as `datasets/<site id>/*.nc` (Met and Flux) and
-`benchmarks/{1lin,3km27,LSTM}/*.nc`. It is required when `enabled` is true.
+: **Default:** False, _optional key_. :octicons-dash-24: Run the analysis on Gadi. When
+false, the analysis runs on the modelevaluation.org worker.
 
 [`module_use`](#+meorg_analysis.module_use){ #+meorg_analysis.module_use }
 
-: **Default:** `/g/data/vk83/staging/modules`, _optional key_. :octicons-dash-24: Module
-path the analysis job adds with `module use`.
+: **Default:** `/g/data/vk83/modules`, _optional key_. :octicons-dash-24: Module path
+that job R adds with `module use`.
 
 [`module`](#+meorg_analysis.module){ #+meorg_analysis.module }
 
-: **Default:** `r-meorg/20260911T111509-1722dbe-pr75`, _optional key_.
-:octicons-dash-24: Module the analysis job loads.
+: **Default:** `r-meorg/1.0.7_0`, _optional key_. :octicons-dash-24: Module that job R
+loads. It provides `meorg-run`.
 
-[`runner`](#+meorg_analysis.runner){ #+meorg_analysis.runner }
+[`cache`](#+meorg_analysis.cache){ #+meorg_analysis.cache }
 
-: **Default:** `/g/data/tm70/ys1563/meorg-gadi-tests/scripts/meorg-run.R`, _optional
-key_. :octicons-dash-24: Path to the `meorg-run.R` runner. The job runs
-`Rscript <runner> --input input.json --run-dir <run dir>`.
+: **Default:** `/scratch/<project>/$USER/meorg-cache`, _optional key_.
+:octicons-dash-24: Directory where job B keeps the analysis inputs it downloads.
+
+[`cache_ro`](#+meorg_analysis.cache_ro){ #+meorg_analysis.cache_ro }
+
+: **Default:** empty, _optional key_. :octicons-dash-24: Read-only cache directories
+that job B searches before `cache`, in order.
 
 [`ncpus`](#+meorg_analysis.ncpus){ #+meorg_analysis.ncpus }
 
-: **Default:** 12, _optional key_. :octicons-dash-24: CPU cores for the analysis job.
+: **Default:** 12, _optional key_. :octicons-dash-24: CPU cores for job R.
 
 [`mem`](#+meorg_analysis.mem){ #+meorg_analysis.mem }
 
-: **Default:** 48GB, _optional key_. :octicons-dash-24: Memory limit for the analysis job.
+: **Default:** 48GB, _optional key_. :octicons-dash-24: Memory limit for job R.
 
 [`walltime`](#+meorg_analysis.walltime){ #+meorg_analysis.walltime }
 
 : **Default:** `01:00:00`, _optional key_. :octicons-dash-24: Wall clock time limit for
-the analysis job.
+job R.
 
 [`storage`](#+meorg_analysis.storage){ #+meorg_analysis.storage }
 
-: **Default:** `[gdata/tm70, gdata/ks32, gdata/vk83]`, _optional key_.
-:octicons-dash-24: Storage flags for the analysis job. They must cover the runner, the
-module, the cache, and the fluxsite outputs.
+: **Default:** `[gdata/ks32, gdata/vk83]`, _optional key_. :octicons-dash-24: Storage
+flags for job R. Jobs B and U add them to the storage flags of the upload job. They must
+cover the module, the cache directories, and the benchcab work directory.
+
+[`model_output_id`](#+meorg_analysis.model_output_id){ #+meorg_analysis.model_output_id }
+
+: **Default:** unset, _optional key_. :octicons-dash-24: For testing only. Use this
+existing model output instead of the one named by `meorg_output_name`. Job B deletes its
+files.
+
+[`experiment_id`](#+meorg_analysis.experiment_id){ #+meorg_analysis.experiment_id }
+
+: **Default:** unset, _optional key_. :octicons-dash-24: For testing only. Use this
+modelevaluation.org experiment instead of the one for `experiment`. Job B does not set
+the benchmarks of the model output.
 
 ```yaml
 
 fluxsite:
   meorg_analysis:
+    enabled: true
+    cache_ro: [/g/data/ab12/meorg-cache]
     ncpus: 12
     mem: 48GB
     walltime: 01:00:00
-    storage: [gdata/tm70, gdata/ks32, gdata/vk83]
+    storage: [gdata/ks32, gdata/vk83, gdata/ab12]
 
 ```
 
