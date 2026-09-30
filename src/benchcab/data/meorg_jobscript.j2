@@ -76,7 +76,7 @@ $MEORG_BIN benchmark update $MODEL_OUTPUT_ID {{ exp_id }} {{ model_benchmark_ids
 [ -n "$MODEL_OUTPUT_ID" ]
 echo "$MODEL_OUTPUT_ID" > {{ run_dir }}/model_output_id
 rm -f {{ run_dir }}/run.json {{ run_dir }}/output.json
-$MEORG_BIN analysis input $MODEL_OUTPUT_ID {{ exp_id }} --run-id {{ run_id }} --cache {{ cache }}{% for root in cache_ro %} --cache-ro {{ root }}{% endfor %} -o {{ run_dir }}/input.json --model-output-files $DATA_DIR/*.nc
+$MEORG_BIN analysis input $MODEL_OUTPUT_ID {{ exp_id }} --run-id {{ run_id }} --cache {{ cache }}{% for root in cache_ro %} --cache-ro {{ root }}{% endfor %} -o {{ run_dir }}/input.json --model-output-files "$DATA_DIR/*.nc"
 {%- else %}
 
 # Trigger the analysis

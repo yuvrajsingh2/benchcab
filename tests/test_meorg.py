@@ -157,7 +157,7 @@ def test_gadi_job_b(config, submissions):
         f"$MEORG_BIN analysis input $MODEL_OUTPUT_ID {AU_TUM['experiment']}"
         f" --run-id {run_id} --cache /scratch/tm70/abc123/meorg-cache"
         f" --cache-ro /a --cache-ro /b -o {run_dir()}/input.json"
-        " --model-output-files $DATA_DIR/*.nc"
+        " --model-output-files \"$DATA_DIR/*.nc\""
     ) in job_b
     assert f'echo "$MODEL_OUTPUT_ID" > {run_dir()}/model_output_id' in job_b
 
