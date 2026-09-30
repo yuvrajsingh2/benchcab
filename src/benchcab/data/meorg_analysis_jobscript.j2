@@ -14,8 +14,8 @@ set -ev
 module purge
 module use {{meorg_module_use}}
 module load {{meorg_module}}
+export MEORG_MODULE={{meorg_module}} MEORG_RUN_ID={{run_id}}
 
-mkdir -p {{run_dir}}
-Rscript {{runner}} --input {{input_json}} --run-dir {{run_dir}}
-
-echo "r-meorg analysis complete. Results are in {{run_dir}}"
+# meorg-run writes run.json for a failed analysis too, then exits 1.
+# Carry on, so that the next job submits the failure to me.org.
+meorg-run --input {{run_dir}}/input.json --run-dir {{run_dir}} || echo "meorg-run failed, see {{run_dir}}/run.json"

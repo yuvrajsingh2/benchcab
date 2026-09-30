@@ -23,6 +23,13 @@ MEORG_BIN={{meorg_bin}}
 MODEL_PROFILE_ID={{ model_prof_id }}
 meorg_output_name={{ mo.name }}
 MODEL_OUTPUT_ARGS=()
+{%- if model_output_id %}
+
+# Use the given model output and delete its existing files
+MODEL_OUTPUT_ID={{ model_output_id }}
+echo "Deleting existing files from model output ID"
+$MEORG_BIN file delete_all $MODEL_OUTPUT_ID
+{%- else %}
 
 # Create new model output entity
 MODEL_OUTPUT_ARGS+="--state-selection {{ mo.state_selection }}"
@@ -45,8 +52,10 @@ fi
 echo " $meorg_output_name on me.org and given this ID: $MODEL_OUTPUT_ID"
 
 MODEL_OUTPUT_ID="$($MEORG_BIN output create $MODEL_PROFILE_ID $meorg_output_name $MODEL_OUTPUT_ARGS | head -n 1 | awk '{print $NF}')"
+{%- endif %}
 echo "Add experiments to model output"
 $MEORG_BIN experiment update $MODEL_OUTPUT_ID {{ model_exp_ids|join(',') }}
+{%- if not gadi %}
 
 # Upload the data
 echo "Uploading data to $MODEL_OUTPUT_ID"
@@ -55,16 +64,30 @@ $MEORG_BIN file upload $DATA_DIR/*.nc -n $NUM_THREADS $MODEL_OUTPUT_ID
 # Wait for the cache to transfer to the object store.
 echo "Waiting for object store transfer ($CACHE_DELAY sec)"
 sleep $CACHE_DELAY
+{%- endif %}
 
-{% for exp_id in model_exp_ids %} 
+{% for exp_id in model_exp_ids %} {% if model_benchmark_ids %}
 echo "Add benchmarks to model output"
 $MEORG_BIN benchmark update $MODEL_OUTPUT_ID {{ exp_id }} {{ model_benchmark_ids|join(',') }}
+{%- endif %}
+{%- if gadi %}
+
+# Fetch the analysis inputs for job R. Job U uploads the files after the result.
+[ -n "$MODEL_OUTPUT_ID" ]
+echo "$MODEL_OUTPUT_ID" > {{ run_dir }}/model_output_id
+rm -f {{ run_dir }}/run.json {{ run_dir }}/output.json
+$MEORG_BIN analysis input $MODEL_OUTPUT_ID {{ exp_id }} --run-id {{ run_id }} --cache {{ cache }}{% for root in cache_ro %} --cache-ro {{ root }}{% endfor %} -o {{ run_dir }}/input.json --model-output-files $DATA_DIR/*.nc
+{%- else %}
 
 # Trigger the analysis
 echo "Triggering analysis on $MODEL_OUTPUT_ID"
 $MEORG_BIN analysis start $MODEL_OUTPUT_ID {{ exp_id }}
+{%- endif %}
 
-{% endfor %} 
+{% endfor %} {% if gadi %}
+echo "Analysis inputs for $MODEL_OUTPUT_ID written to {{ run_dir }}/input.json"
+{%- else %}
 
 MEORG_BASE_URL_DEV="${MEORG_BASE_URL_DEV:-https://modelevaluation.org/api/}"
 echo "Files transferred to me.org. Analysis in progress. Open ${MEORG_BASE_URL_DEV}/display/${MODEL_OUTPUT_ID} to see results"
+{%- endif %}

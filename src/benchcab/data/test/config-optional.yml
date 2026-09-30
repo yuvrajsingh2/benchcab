@@ -10,6 +10,13 @@ fluxsite:
     walltime: "10:00:00"
     storage:
       - scratch/$PROJECT
+  meorg_analysis:
+    enabled: true
+    cache: /scratch/xp65/test/cache
+    cache_ro:
+      - /g/data/dm8/meorg-cache
+    model_output_id: mo123
+    experiment_id: exp456
 
 spatial:
   met_forcings:

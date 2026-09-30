@@ -108,6 +108,13 @@ def all_optional_custom_config(no_optional_config) -> dict:
                 "walltime": "10:00:00",
                 "storage": ["scratch/$PROJECT"],
             },
+            "meorg_analysis": {
+                "enabled": True,
+                "cache": "/scratch/xp65/test/cache",
+                "cache_ro": ["/g/data/dm8/meorg-cache"],
+                "model_output_id": "mo123",
+                "experiment_id": "exp456",
+            },
         },
         "science_configurations": [
             {
@@ -264,7 +271,9 @@ def test_read_optional_config(config_path, all_optional_custom_config):
     output_config = all_optional_custom_config | {
         "meorg_output_name": "123-sample-optional_7J3IEJ"
     }
-    output_config["fluxsite"]["meorg_analysis"] = bi.MEORG_ANALYSIS_DEFAULTS
+    output_config["fluxsite"]["meorg_analysis"] = (
+        bi.MEORG_ANALYSIS_DEFAULTS | output_config["fluxsite"]["meorg_analysis"]
+    )
     del output_config["realisations"][0]["meorg_output_name"]
     config = bc.read_config(config_path)
     assert pformat(config) == pformat(output_config)

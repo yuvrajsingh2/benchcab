@@ -124,10 +124,19 @@ fluxsite:
         module:
           type: "string"
           required: false
-        runner:
+        cache:
+          type: "string"
+          nullable: true
+          required: false
+        cache_ro:
+          type: list
+          required: false
+          schema:
+            type: "string"
+        model_output_id:
           type: "string"
           required: false
-        cache_root:
+        experiment_id:
           type: "string"
           required: false
         ncpus:
