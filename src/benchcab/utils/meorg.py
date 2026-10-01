@@ -6,6 +6,7 @@ from pathlib import Path
 
 from hpcpy import get_client
 from meorg_client.client import Client as MeorgClient
+from meorg_client.utilities import is_dev_mode
 
 
 import benchcab.utils as bu
@@ -80,7 +81,7 @@ def do_meorg(
         return False
 
     # Also only run if the client is initialised
-    if MeorgClient().is_initialised() == False:
+    if MeorgClient().is_initialised(dev=is_dev_mode()) == False:
 
         logger.warn(
             "A meorg_output_name has been supplied, but the meorg_client is not initialised."

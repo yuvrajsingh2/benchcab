@@ -19,7 +19,7 @@ AU_TUM = internal.MEORG_EXPERIMENT_ID_MAP["AU-Tum"]
 class InitialisedClient:
     """Stand-in for a `meorg_client` with credentials in `~/.meorg`."""
 
-    def is_initialised(self):
+    def is_initialised(self, dev=False):
         """Report the client as initialised."""
         return True
 
