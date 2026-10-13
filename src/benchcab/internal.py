@@ -319,3 +319,20 @@ MEORG_CLIENT = dict(
     walltime="01:00:00",
     storage=["gdata/ks32", "gdata/xp65", "gdata/wd9", "gdata/rp23"],
 )
+
+# Defaults for the analysis on Gadi (`fluxsite.meorg_analysis`).
+# `ncpus`, `mem` and `walltime` are for the analysis job.
+MEORG_ANALYSIS_DEFAULTS = dict(
+    enabled=False,
+    module="r-meorg/1.0.7_0",
+    ncpus=4,
+    mem="16GB",
+    walltime="00:30:00",
+)
+
+# Fixed settings for the analysis on Gadi
+MEORG_ANALYSIS = dict(
+    module_use="/g/data/vk83/modules",  # Released r-meorg modules
+    cache="/scratch/{project}/{user}/meorg-cache",  # Downloaded analysis inputs
+    storage=["gdata/vk83"],  # Analysis job, before `fluxsite.pbs.storage`
+)
