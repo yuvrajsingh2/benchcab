@@ -163,6 +163,52 @@ fluxsites:
 
 ```
 
+### [meorg_analysis](#meorg_analysis)
+
+Contains settings to run the [modelevaluation.org][meorg] analysis on Gadi instead of on the modelevaluation.org worker. It applies only when [`meorg_output_name`](#meorg_output_name) is set.
+
+When `enabled` is true, `benchcab` submits three PBS jobs after the fluxsite job. Each job starts only if the job before it succeeds:
+
+1. The inputs job (`copyq`) creates the model output on modelevaluation.org and downloads the analysis inputs to `/scratch/<project>/$USER/meorg-cache`. Inputs already in this cache are not downloaded again.
+2. The analysis job (`normal`) runs the analysis with the `r-meorg` module. The results are in `runs/fluxsite/analysis/meorg/`.
+3. The result job (`copyq`) submits the result to modelevaluation.org, then uploads the fluxsite outputs.
+
+The inputs and result jobs use `copyq` because the `normal` compute nodes have no internet access. Each job adds the [`storage`](#+pbs.storage) of the fluxsite job to its own storage flags. The analysis job also gets `gdata/vk83`, where the `r-meorg` module is. **You must be a member of the `vk83` project** to enable this option.
+
+`benchcab meorg-analysis` submits the same three jobs for fluxsite outputs that already exist, also when `enabled` is false. Add `--dry-run` to write the job scripts without submitting them. `benchcab meorg-transfer` submits the three jobs when `enabled` is true, and uploads the outputs for analysis on the modelevaluation.org worker when it is false.
+
+This key is _optional_. **Default** values apply if it is not specified.
+
+```yaml
+fluxsite:
+  meorg_analysis:
+    enabled: true
+    module: r-meorg/1.0.7_0
+    ncpus: 4
+    mem: 16GB
+    walltime: 00:30:00
+```
+
+[`enabled`](#+meorg_analysis.enabled){ #+meorg_analysis.enabled }
+
+: **Default:** False, _optional key_. :octicons-dash-24: Run the analysis on Gadi. When false, the analysis runs on the modelevaluation.org worker.
+
+[`module`](#+meorg_analysis.module){ #+meorg_analysis.module }
+
+: **Default:** `r-meorg/1.0.7_0`, _optional key_. :octicons-dash-24: The `r-meorg` module in `/g/data/vk83/modules` that the analysis job loads.
+
+[`ncpus`](#+meorg_analysis.ncpus){ #+meorg_analysis.ncpus }
+
+: **Default:** 4, _optional key_. :octicons-dash-24: The number of CPU cores for the analysis job, i.e. the `-l ncpus=<4>` PBS flag in [PBS Directives Explained][nci-pbs-directives].
+
+[`mem`](#+meorg_analysis.mem){ #+meorg_analysis.mem }
+
+: **Default:** 16GB, _optional key_. :octicons-dash-24: The total memory limit for the analysis job, i.e. the `-l mem=<16GB>` PBS flag in [PBS Directives Explained][nci-pbs-directives].
+
+[`walltime`](#+meorg_analysis.walltime){ #+meorg_analysis.walltime }
+
+: **Default:** `00:30:00`, _optional key_. :octicons-dash-24: The wall clock time limit for the analysis job, i.e. the `-l walltime=<HH:MM:SS>` PBS flag in [PBS Directives Explained][nci-pbs-directives].
+
 ## spatial
 
 Contains settings specific to spatial tests.
