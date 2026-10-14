@@ -321,14 +321,18 @@ MEORG_CLIENT = dict(
 )
 
 # Defaults for the analysis on Gadi (`fluxsite.meorg_analysis`).
-# `ncpus`, `mem` and `walltime` are for the analysis job.
 MEORG_ANALYSIS_DEFAULTS = dict(
     enabled=False,
     module="r-meorg/1.0.7_0",
-    ncpus=4,
-    mem="16GB",
-    walltime="00:30:00",
 )
+
+# Resources of the analysis job, by experiment type. The multi-site numbers are
+# from 42-site runs with 3 benchmarks: 62-72 GB peak memory and 360-533 s. Gadi
+# charges max(ncpus, mem / 4GB), so 96GB costs the same as 24 CPUs.
+MEORG_ANALYSIS_RESOURCES = {
+    "single-site": dict(ncpus=4, mem="16GB", walltime="00:30:00"),
+    "multi-site": dict(ncpus=24, mem="96GB", walltime="01:00:00"),
+}
 
 # Fixed settings for the analysis on Gadi
 MEORG_ANALYSIS = dict(

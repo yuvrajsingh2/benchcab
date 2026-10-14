@@ -184,10 +184,17 @@ fluxsite:
   meorg_analysis:
     enabled: true
     module: r-meorg/1.0.7_0
-    ncpus: 4
-    mem: 16GB
-    walltime: 00:30:00
+    ncpus: 24
+    mem: 96GB
+    walltime: 01:00:00
 ```
+
+The default `ncpus`, `mem` and `walltime` depend on [`fluxsite.experiment`](#experiment). A multi-site experiment (`five-site-test` or `forty-two-site-test`) needs more resources than a single site. A key you set replaces only its own default.
+
+| Experiment | `ncpus` | `mem` | `walltime` |
+| --- | --- | --- | --- |
+| A single site, e.g. `AU-Tum` | 4 | 16GB | `00:30:00` |
+| `five-site-test`, `forty-two-site-test` | 24 | 96GB | `01:00:00` |
 
 [`enabled`](#+meorg_analysis.enabled){ #+meorg_analysis.enabled }
 
@@ -199,15 +206,15 @@ fluxsite:
 
 [`ncpus`](#+meorg_analysis.ncpus){ #+meorg_analysis.ncpus }
 
-: **Default:** 4, _optional key_. :octicons-dash-24: The number of CPU cores for the analysis job, i.e. the `-l ncpus=<4>` PBS flag in [PBS Directives Explained][nci-pbs-directives].
+: **Default:** 4 for a single site, 24 for a multi-site experiment, _optional key_. :octicons-dash-24: The number of CPU cores for the analysis job, i.e. the `-l ncpus=<4>` PBS flag in [PBS Directives Explained][nci-pbs-directives].
 
 [`mem`](#+meorg_analysis.mem){ #+meorg_analysis.mem }
 
-: **Default:** 16GB, _optional key_. :octicons-dash-24: The total memory limit for the analysis job, i.e. the `-l mem=<16GB>` PBS flag in [PBS Directives Explained][nci-pbs-directives].
+: **Default:** 16GB for a single site, 96GB for a multi-site experiment, _optional key_. :octicons-dash-24: The total memory limit for the analysis job, i.e. the `-l mem=<16GB>` PBS flag in [PBS Directives Explained][nci-pbs-directives].
 
 [`walltime`](#+meorg_analysis.walltime){ #+meorg_analysis.walltime }
 
-: **Default:** `00:30:00`, _optional key_. :octicons-dash-24: The wall clock time limit for the analysis job, i.e. the `-l walltime=<HH:MM:SS>` PBS flag in [PBS Directives Explained][nci-pbs-directives].
+: **Default:** `00:30:00` for a single site, `01:00:00` for a multi-site experiment, _optional key_. :octicons-dash-24: The wall clock time limit for the analysis job, i.e. the `-l walltime=<HH:MM:SS>` PBS flag in [PBS Directives Explained][nci-pbs-directives].
 
 ## spatial
 
