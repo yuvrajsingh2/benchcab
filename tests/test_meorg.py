@@ -1,5 +1,6 @@
 """`pytest` tests for `utils/meorg.py`."""
 
+import os
 import re
 from pathlib import Path
 
@@ -25,10 +26,17 @@ class InitialisedClient:
 
 @pytest.fixture(autouse=True)
 def _pbs(monkeypatch, mock_cwd):
-    """Render job scripts for PBS into the test directory."""
+    """Render job scripts for PBS into the test directory, with no shared cache.
+
+    The shared cache points at a missing directory, so the tests give the same
+    result on Gadi. Tests that need the shared cache create this directory.
+    """
     monkeypatch.setenv("USER", "abc123")
     monkeypatch.setattr(hpcpy.constants, "JOB_SCRIPT_DIR", mock_cwd / "job_scripts")
     monkeypatch.setattr(bm, "get_client", PBSClient)
+    monkeypatch.setitem(
+        bm.internal.MEORG_ANALYSIS, "shared_cache", str(mock_cwd / "shared-cache")
+    )
 
 
 @pytest.fixture()
@@ -76,6 +84,22 @@ class TestGetRunId:
         assert re.fullmatch(r"benchcab-AU-Tum-bench_example-\d{8}T\d{6}Z", run_id)
 
 
+class TestGetAnalysisCache:
+    """Tests for `get_analysis_cache()`."""
+
+    def test_shared_cache(self, mock_cwd):
+        """Success case: a writable shared cache is used, with its storage."""
+        shared = mock_cwd / "shared-cache"
+        shared.mkdir()
+        assert bm.get_analysis_cache("tm70") == (str(shared), ["gdata/dm8"])
+
+    @pytest.mark.skipif(os.geteuid() == 0, reason="root can write to any directory")
+    def test_shared_cache_not_writable(self, mock_cwd):
+        """Success case: without write access, the cache is in the user's scratch."""
+        (mock_cwd / "shared-cache").mkdir(mode=0o555)
+        assert bm.get_analysis_cache("tm70") == ("/scratch/tm70/abc123/meorg-cache", [])
+
+
 class TestDoMeorg:
     """Tests for `do_meorg()`."""
 
@@ -111,12 +135,14 @@ class TestDoMeorg:
                 f"test/{expected}"
             )
 
-    def test_gadi_dry_run(self, meorg_config, caplog):
+    def test_gadi_dry_run(self, meorg_config, mock_cwd, caplog):
         """Success case: a dry run reports the three `qsub` commands.
 
         The jobs are chained with `afterok`. Each job adds the fluxsite storage
-        to its own, without duplicates.
+        to its own, without duplicates. Only the inputs and analysis jobs read
+        the shared cache, so only they get its storage.
         """
+        (mock_cwd / "shared-cache").mkdir()
         meorg_config["fluxsite"]["pbs"]["storage"] = ["gdata/ab12", "gdata/vk83"]
         assert bm.do_meorg(
             meorg_config, OUTPUTS, "", FLUXSITE_JOB_ID, gadi=True, dry_run=True
@@ -130,9 +156,9 @@ class TestDoMeorg:
         # The last word of each command is the path of the rendered job script
         assert [cmd.rsplit(" ", 1)[0] for cmd in commands] == [
             f"qsub -W depend=afterok:{FLUXSITE_JOB_ID} -l walltime=01:00:00"
-            f" -l storage={copyq}",
+            f" -l storage={copyq}+gdata/dm8",
             "qsub -W depend=afterok:<job 1> -q normal -l walltime=00:30:00"
-            " -l storage=gdata/vk83+gdata/ab12",
+            " -l storage=gdata/vk83+gdata/dm8+gdata/ab12",
             f"qsub -W depend=afterok:<job 2> -l walltime=01:00:00 -l storage={copyq}",
         ]
 

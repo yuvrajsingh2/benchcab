@@ -337,6 +337,10 @@ MEORG_ANALYSIS_RESOURCES = {
 # Fixed settings for the analysis on Gadi
 MEORG_ANALYSIS = dict(
     module_use="/g/data/vk83/modules",  # Released r-meorg modules
-    cache="/scratch/{project}/{user}/meorg-cache",  # Downloaded analysis inputs
+    # Downloaded analysis inputs. The dm8 cache is shared by its members, so an
+    # input is downloaded once for all users. It is used when it is writable.
+    shared_cache="/g/data/dm8/meorg-cache",
+    shared_cache_storage=["gdata/dm8"],
+    cache="/scratch/{project}/{user}/meorg-cache",  # Otherwise, one per user
     storage=["gdata/vk83"],  # Analysis job, before `fluxsite.pbs.storage`
 )

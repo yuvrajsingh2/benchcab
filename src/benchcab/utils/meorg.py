@@ -158,6 +158,30 @@ def get_run_id(experiment: str) -> str:
     return f"benchcab-{experiment}-{Path.cwd().name}-{timestamp}"
 
 
+def get_analysis_cache(project: str) -> tuple:
+    """Return the cache of the analysis inputs and the storage it needs.
+
+    The shared cache is used when the user can write to it, as a member of its
+    project. Otherwise the inputs go to a cache in the user's scratch.
+
+    Parameters
+    ----------
+    project : str
+        The NCI project of the benchcab run
+
+    Returns
+    -------
+    tuple
+        The cache directory, and the storage flags the jobs that read it need
+
+    """
+    analysis = internal.MEORG_ANALYSIS
+    if os.access(analysis["shared_cache"], os.W_OK | os.X_OK):
+        return analysis["shared_cache"], analysis["shared_cache_storage"]
+    user_cache = analysis["cache"].format(project=project, user=os.environ.get("USER"))
+    return user_cache, []
+
+
 def submit_gadi_analysis(
     config: dict, upload_job: dict, depends_on: str = None, dry_run: bool = False
 ) -> list:
@@ -196,24 +220,27 @@ def submit_gadi_analysis(
         run_dir=str(run_dir),
         run_id=get_run_id(config["fluxsite"]["experiment"]),
     )
-    # Every job also needs the storage of the benchcab work directory
+    # Every job also needs the storage of the benchcab work directory. The
+    # inputs and analysis jobs also need the storage of the cache.
     fluxsite_storage = config["fluxsite"]["pbs"]["storage"]
     copyq_storage = list(dict.fromkeys(upload_job["storage"] + fluxsite_storage))
+    cache, cache_storage = get_analysis_cache(config["project"])
+    bu.get_logger().info(f"Analysis inputs cache: {cache}")
     jobs = {
         "meorg_jobscript.j2": dict(
             upload_job,
-            storage=copyq_storage,
+            storage=list(dict.fromkeys(copyq_storage + cache_storage)),
             gadi=True,
-            cache=analysis["cache"].format(
-                project=config["project"], user=os.environ.get("USER")
-            ),
+            cache=cache,
         ),
         "meorg_analysis_jobscript.j2": dict(
             queue="normal",
             ncpus=settings["ncpus"],
             mem=settings["mem"],
             walltime=settings["walltime"],
-            storage=list(dict.fromkeys(analysis["storage"] + fluxsite_storage)),
+            storage=list(
+                dict.fromkeys(analysis["storage"] + cache_storage + fluxsite_storage)
+            ),
             # Prefixed to avoid the `module_use` and `modules` arguments that
             # newer hpcpy versions consume before the template context.
             meorg_module_use=analysis["module_use"],

@@ -169,11 +169,11 @@ Contains settings to run the [modelevaluation.org][meorg] analysis on Gadi inste
 
 When `enabled` is true, `benchcab` submits three PBS jobs after the fluxsite job. Each job starts only if the job before it succeeds:
 
-1. The inputs job (`copyq`) creates the model output on modelevaluation.org, or reuses the existing one with the same name without changing its files, and downloads the analysis inputs to `/scratch/<project>/$USER/meorg-cache`. Inputs already in this cache are not downloaded again.
+1. The inputs job (`copyq`) creates the model output on modelevaluation.org, or reuses the existing one with the same name without changing its files, and downloads the analysis inputs that are not already in the cache. The cache is `/g/data/dm8/meorg-cache`, which all members of the `dm8` project share, so an input is downloaded once for all users. If you cannot write to it, the cache is `/scratch/<project>/$USER/meorg-cache`.
 2. The analysis job (`normal`) runs the analysis with the `r-meorg` module. The results are in `runs/fluxsite/analysis/meorg/`.
 3. The result job (`copyq`) deletes the files of an earlier run from the model output, submits the result to modelevaluation.org, then uploads the fluxsite outputs. If PBS stops the inputs or analysis job, for example at its memory or time limit, the model output keeps its files. A failed analysis is also submitted as a result.
 
-The inputs and result jobs use `copyq` because the `normal` compute nodes have no internet access. Each job adds the [`storage`](#+pbs.storage) of the fluxsite job to its own storage flags. The analysis job also gets `gdata/vk83`, where the `r-meorg` module is. **You must be a member of the `vk83` project** to enable this option.
+The inputs and result jobs use `copyq` because the `normal` compute nodes have no internet access. Each job adds the [`storage`](#+pbs.storage) of the fluxsite job to its own storage flags. The analysis job also gets `gdata/vk83`, where the `r-meorg` module is. **You must be a member of the `vk83` project** to enable this option. When the shared cache is used, the inputs and analysis jobs also get `gdata/dm8`. Join the `dm8` project to use the shared cache.
 
 `benchcab meorg-analysis` submits the same three jobs for fluxsite outputs that already exist, also when `enabled` is false. Add `--dry-run` to write the job scripts without submitting them. `benchcab meorg-transfer` submits the three jobs when `enabled` is true, and uploads the outputs for analysis on the modelevaluation.org worker when it is false.
 
