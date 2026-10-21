@@ -163,9 +163,11 @@ def submit_gadi_analysis(
 ) -> list:
     """Submit the analysis on Gadi as three jobs chained with `afterok`.
 
-    The inputs job (copyq) creates the model output on me.org without files and
-    fetches the analysis inputs. The analysis job (normal) runs `meorg-run`. The
-    result job (copyq) submits the result, then uploads the model output files.
+    The inputs job (copyq) creates the model output on me.org, or reuses the one
+    with this name without changing its files, and fetches the analysis inputs.
+    The analysis job (normal) runs `meorg-run`. The result job (copyq) deletes
+    the files of an earlier run, submits the result, then uploads the model
+    output files.
 
     Parameters
     ----------

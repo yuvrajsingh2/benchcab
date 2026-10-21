@@ -29,22 +29,18 @@ MODEL_OUTPUT_ARGS+=" --parameter-selection automated"
 MODEL_OUTPUT_ARGS+=" --is-bundle"
 
 
-echo "Querying whether $meorg_output_name already exists on me.org"
-MODEL_OUTPUT_ID=$($MEORG_BIN output query $meorg_output_name | head -n 1 )
-if [ ! -z "${MODEL_OUTPUT_ID}" ] ; then
+# Create the model output, or get the ID of the existing one with this name.
+# me.org refuses a name that belongs to another user.
+MODEL_OUTPUT_ID="$($MEORG_BIN output create $MODEL_PROFILE_ID $meorg_output_name $MODEL_OUTPUT_ARGS | head -n 1 | awk '{print $NF}')"
+[ -n "$MODEL_OUTPUT_ID" ]
+echo "$meorg_output_name on me.org has this ID: $MODEL_OUTPUT_ID"
+
+echo "Add experiments to model output"
+$MEORG_BIN experiment update $MODEL_OUTPUT_ID jwN9jNMWLEzbT2i9D
+
 # Re-run analysis on the same model output ID, cleaning up existing files
 echo "Deleting existing files from model output ID"
 $MEORG_BIN file delete_all $MODEL_OUTPUT_ID
-echo -n "Updated"
-else
-echo -n "Created"
-fi
-
-echo " $meorg_output_name on me.org and given this ID: $MODEL_OUTPUT_ID"
-
-MODEL_OUTPUT_ID="$($MEORG_BIN output create $MODEL_PROFILE_ID $meorg_output_name $MODEL_OUTPUT_ARGS | head -n 1 | awk '{print $NF}')"
-echo "Add experiments to model output"
-$MEORG_BIN experiment update $MODEL_OUTPUT_ID jwN9jNMWLEzbT2i9D
 
 # Upload the data
 echo "Uploading data to $MODEL_OUTPUT_ID"

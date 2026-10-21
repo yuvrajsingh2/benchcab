@@ -29,20 +29,12 @@ MODEL_OUTPUT_ARGS+=" --parameter-selection automated"
 MODEL_OUTPUT_ARGS+=" --is-bundle"
 
 
-echo "Querying whether $meorg_output_name already exists on me.org"
-MODEL_OUTPUT_ID=$($MEORG_BIN output query $meorg_output_name | head -n 1 )
-if [ ! -z "${MODEL_OUTPUT_ID}" ] ; then
-# Re-run analysis on the same model output ID, cleaning up existing files
-echo "Deleting existing files from model output ID"
-$MEORG_BIN file delete_all $MODEL_OUTPUT_ID
-echo -n "Updated"
-else
-echo -n "Created"
-fi
-
-echo " $meorg_output_name on me.org and given this ID: $MODEL_OUTPUT_ID"
-
+# Create the model output, or get the ID of the existing one with this name.
+# me.org refuses a name that belongs to another user.
 MODEL_OUTPUT_ID="$($MEORG_BIN output create $MODEL_PROFILE_ID $meorg_output_name $MODEL_OUTPUT_ARGS | head -n 1 | awk '{print $NF}')"
+[ -n "$MODEL_OUTPUT_ID" ]
+echo "$meorg_output_name on me.org has this ID: $MODEL_OUTPUT_ID"
+
 echo "Add experiments to model output"
 $MEORG_BIN experiment update $MODEL_OUTPUT_ID jwN9jNMWLEzbT2i9D
 
@@ -50,9 +42,9 @@ $MEORG_BIN experiment update $MODEL_OUTPUT_ID jwN9jNMWLEzbT2i9D
 echo "Add benchmarks to model output"
 $MEORG_BIN benchmark update $MODEL_OUTPUT_ID jwN9jNMWLEzbT2i9D J9BBQCJdsuehsmMf2,N5X2rjmp96baXrrJ3,Q7Xu6yGGYdzvvAwbn
 
-# Fetch the analysis inputs for the analysis job. The result job uploads the
-# model output files after the result.
-[ -n "$MODEL_OUTPUT_ID" ]
+# Fetch the analysis inputs for the analysis job. The result job replaces the
+# model output files after the analysis job, so if a job is stopped, the model
+# output keeps the old files.
 echo "$MODEL_OUTPUT_ID" > /work/runs/fluxsite/analysis/meorg/model_output_id
 rm -f /work/runs/fluxsite/analysis/meorg/run.json /work/runs/fluxsite/analysis/meorg/output.json
 $MEORG_BIN analysis input $MODEL_OUTPUT_ID jwN9jNMWLEzbT2i9D $DATA_DIR/*.nc --run-id benchcab-AU-Tum --cache /scratch/tm70/abc123/meorg-cache -o /work/runs/fluxsite/analysis/meorg/input.json

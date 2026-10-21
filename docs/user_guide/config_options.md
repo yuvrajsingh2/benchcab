@@ -169,9 +169,9 @@ Contains settings to run the [modelevaluation.org][meorg] analysis on Gadi inste
 
 When `enabled` is true, `benchcab` submits three PBS jobs after the fluxsite job. Each job starts only if the job before it succeeds:
 
-1. The inputs job (`copyq`) creates the model output on modelevaluation.org and downloads the analysis inputs to `/scratch/<project>/$USER/meorg-cache`. Inputs already in this cache are not downloaded again.
+1. The inputs job (`copyq`) creates the model output on modelevaluation.org, or reuses the existing one with the same name without changing its files, and downloads the analysis inputs to `/scratch/<project>/$USER/meorg-cache`. Inputs already in this cache are not downloaded again.
 2. The analysis job (`normal`) runs the analysis with the `r-meorg` module. The results are in `runs/fluxsite/analysis/meorg/`.
-3. The result job (`copyq`) submits the result to modelevaluation.org, then uploads the fluxsite outputs.
+3. The result job (`copyq`) deletes the files of an earlier run from the model output, submits the result to modelevaluation.org, then uploads the fluxsite outputs. If PBS stops the inputs or analysis job, for example at its memory or time limit, the model output keeps its files. A failed analysis is also submitted as a result.
 
 The inputs and result jobs use `copyq` because the `normal` compute nodes have no internet access. Each job adds the [`storage`](#+pbs.storage) of the fluxsite job to its own storage flags. The analysis job also gets `gdata/vk83`, where the `r-meorg` module is. **You must be a member of the `vk83` project** to enable this option.
 
@@ -432,7 +432,7 @@ realisations:
 
 1. A `model_output_name` is created using the format `<realisation_name>-<hash>`. Here, The `realisation_name` is determined where `meorg_output_name` is set as `true`.  
 **Note**: The `realisation_name` is set via [name](#name) if provided, otherwise the default repository name is used. A 6-character hash derived from `realisations`, `model_profile_id` and `$USER` is appended at the end. The hash is used to minimise name conflicts for different users' needs.  
-**Note**: In case `model_output_name` already exists on `me.org`, the files within that model output are deleted. This is done to send a fresh set of benchmarking results for analysis, ensuring that the user can re-run `benchcab` without any issues. 
+**Note**: In case `model_output_name` already exists on `me.org`, the files within that model output are deleted. This is done to send a fresh set of benchmarking results for analysis, ensuring that the user can re-run `benchcab` without any issues. With [`meorg_analysis`](#meorg_analysis) enabled, the files are deleted only after the analysis job finishes. 
 2. The following settings are taken by default for the model output:
     * Model Profile - `CABLE`
     * State Selection - `default`

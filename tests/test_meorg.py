@@ -135,3 +135,18 @@ class TestDoMeorg:
             " -l storage=gdata/vk83+gdata/ab12",
             f"qsub -W depend=afterok:<job 2> -l walltime=01:00:00 -l storage={copyq}",
         ]
+
+    def test_gadi_replaces_files_after_analysis(self, meorg_config, meorg_bin):
+        """Success case: only the result job replaces the model output files.
+
+        So if the inputs or analysis job stops, the model output keeps its files.
+        """
+        bm.do_meorg(meorg_config, OUTPUTS, "", gadi=True, dry_run=True)
+        inputs = read_job_script("meorg_jobscript", meorg_bin)
+        result = read_job_script("meorg_result_jobscript", meorg_bin)
+        assert "file delete_all" not in inputs
+        assert (
+            result.index("file delete_all")
+            < result.index("analysis submit-result")
+            < result.index("file upload")
+        )
